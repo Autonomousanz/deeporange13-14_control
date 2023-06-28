@@ -94,6 +94,9 @@ namespace deeporange14 {
              // is execution button pressed
                 //  update state if true
             //  
+            if (executed_Nav){
+                rosSupMsg.ros_state = AU4_EXEC_IMINENT;
+            }
         }
         else if (rosSupMsg.ros_state == AU4_EXEC_IMINENT){
             if (isHandshakefailed()){
@@ -171,7 +174,9 @@ namespace deeporange14 {
         }
 
         // Mission Cancelled or StopROS buttons executed 
-
+        if (mission_cancelled or stop_ROS){
+            return true;
+        }
 
         // ROS mode/ dbw mode not equal to 3
         if (raptorMsg.dbw_mode != 3){
@@ -196,8 +201,11 @@ namespace deeporange14 {
        
     }
     void StateMachine::getStackStatus(const deeporange14_msgs::RaptorState::ConstPtr& msg){
-        stackStatusMsg.mission_cancelled = msg->system_state;
-        stackStatusMsg.raptor_state = msg->system_state;
+        mission_cancelled = msg->mission_cancelled;
+        mission_completed = msg->mission_completed;
+        stop_ROS = msg->stop_ROS;
+        executed_nav = msg->executed_nav;
+        global_plan_ready = msg->global_plan_ready
        
     }
     
