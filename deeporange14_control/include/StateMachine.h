@@ -11,10 +11,10 @@
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
 
-#include <deeporange13_msgs/RaptorState.h>
-#include <deeporange13_msgs/RosState.h>
-#include <deeporange13_msgs/TorqueValues.h>
-#include <deeporange13_control/DeeporangeStateEnums.h>
+#include <deeporange14_msgs/RaptorState.h>
+#include <deeporange14_msgs/RosState.h>
+#include <deeporange14_msgs/TorqueValues.h>
+#include <deeporange14_control/DeeporangeStateEnums.h>
 
 namespace deeporange14
 {
@@ -42,23 +42,22 @@ namespace deeporange14
         // Subscribers
         ros::Subscriber sub_raptor;
         ros::Subscriber sub_cmdVel;
-        ros::Subscriber sub_stackfault;
-        ros::Subscriber raptor_heartbeat;
+        ros::Subscriber sub_stackStatus;
+        ros::Subscriber sub_cmdTrq;
+      
 
         // Init the msg variables
         
         deeporange14_msgs::RaptorState raptorMsg;
         deeporange14_msgs::RosState rosSupMsg;
         deeporange14_msgs::TorqueValues torqueMsg;
-        deeporange14_msgs::StackFaults faultMsg;
-        deeporange14_msgs::RaptorHeartbeat raptorHBMsg;
-        geometry_msgs::Twist commandedTwist;
+
         nav_msgs::Odometry odometryMsg;
+        bool mission_cancelled;
+        bool mission_completed;
+        bool executed_Nav;
+        bool stop_ROS
         
-        // Setting up internal semaphores:
-        bool is_raptorMsg_old;
-        int raptorMsgCounter;
-        bool is_Phx_NavigationActive;        
 
     };
 
