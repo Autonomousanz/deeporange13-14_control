@@ -6,14 +6,15 @@ namespace deeporange14 {
         // Instantiate sub/pubs
         topic_ns = "/deeporange14"
         sub_raptor = node.subscribe(std::string(topic_ns + "/raptor_state"), 10, &StateMachine::getRaptorMsg, this, ros::TransportHints().tcpNoDelay(true));
-        sub_cmdVel = node.subscribe(std::string(topic_ns +"/cmd_vel"), 10, &StateMachine::getCommandedTwist, this, ros::TransportHints().tcpNoDelay(true));
+        sub_cmdVel = node.subscribe(std::string(topic_ns + "/cmd_vel"), 10, &StateMachine::getCommandedTwist, this, ros::TransportHints().tcpNoDelay(true));
+        sub_stackStatus = node.subscribe(std::string(topic_ns +"/stack_status"), 10, &StateMachine::getStackstatus, this, ros::TransportHints().tcpNoDelay(true));
         sub_cmdTrq = node.subscribe(std::string(topic_ns +"/cmd_torq"), 10, &StateMachine::getCommandedTorques, this, ros::TransportHints().tcpNoDelay(true));
 
 
         pub_trackVel = node.advertise<can_msgs::Frame>("can_tx", 10);
         pub_estop    = node.advertise<std_msgs::Bool>("fort_estop", 10);
         pub_rosState = node.advertise<deeporange14_msgs::RosState>(std::string(topic_ns +"/ros_state"), 10);
-
+        pub_rtkState = node.advertise<deeporange14_msgs::RosState>(std::string(topic_ns +"/ros_state"), 10);
         // Set up Timer - with calback to publish ROS state all the time that the node is running
         timer = node.createTimer(ros::Duration(1.0 / 20.0), &StateMachine::publishROSState, this);
 
@@ -73,7 +74,7 @@ namespace deeporange14 {
                 rosSupMsg.ros_state = AU1_STARTUP;
             }
 
-            if (raptorMsg.system_state == SS8_NOMINALOP && raptorMsg.dbw_mode == 2 ){
+            if (raptorMsg.system_state == SS8_NOMINALOP && raptorMsg.dbw_mode == 3 ){
                 rosSupMsg.ros_state = AU3_WAIT_EXECUTION;
             }
 
@@ -155,24 +156,49 @@ namespace deeporange14 {
         }  
     }
     bool StateMachine::isHandshakeFailed(){
-        // checking ros_state shows default values
+        // checking system_state & ros_state shows default values
 
     }
     bool StateMachine::isStackFault(){
         // Stack Crashed
-        // Mission Cancelled
+        std::string topicName = topic_ns + "/cmd_vel"
+        bool topicExists = ros::master::topicExists(topicName);
+        if (topicExists){
+            return true;
+        }else{
+            ROS_WARN("ERROR : Stack Crashed !, ROS topic '%s' does not exist ",topicName.c_str());
+            return false;
+        }
+
+        // Mission Cancelled or StopROS buttons executed 
+
+
         // ROS mode/ dbw mode not equal to 3
+        if (raptorMsg.dbw_mode != 3){
+            ROS_WARN("ERROR : Out of DBW Mode");
+            return true;
+        }
+        
         
     }
     void StateMachine::getCommandedTwist(const geometry_msgs::Twist::ConstPtr& msg){
         commandedTwist.linear.x = msg->linear.x;
-        commandedTwist.angular.z = msg->angular.z;    
-        // Convert to torques
-
+        commandedTwist.angular.z = msg->angular.z;
     }
-    void StateMachine::getCommandedTorques(const deeporange14_msgs::TorqueValues::ConstPtr& msg){
+ 
+    void StateMachine::getCommandedTorques(const deeporange14_msgs::TorqueValues::ConstPtr& msg){   // not used as of now
         torqueMsg.left_torque = msg->left_torque;
         torqueMsg.right_torque = msg->right_torque;    
-         
     }
+    void StateMachine::getRaptorMsg(const deeporange14_msgs::RaptorState::ConstPtr& msg){
+        raptorMsg_.system_state = msg->system_state;
+        rosSupMsg_.raptor_state = msg->system_state;
+       
+    }
+    void StateMachine::getStackStatus(const deeporange14_msgs::RaptorState::ConstPtr& msg){
+        stackStatusMsg.mission_cancelled = msg->system_state;
+        stackStatusMsg.raptor_state = msg->system_state;
+       
+    }
+    
 }
